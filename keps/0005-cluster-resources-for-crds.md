@@ -86,7 +86,7 @@ should probably be created
 
 #### Story 4
 
-OperatorVersions require the existance of CRDs that are not controlled by Kudo (e.g. ETCD Operator) and require those to be installed when FV is enabled.
+OperatorVersions require the existence of CRDs that are not controlled by Kudo (e.g. ETCD Operator) and require those to be installed when OV is enabled.
 
 ### Implementation Details/Notes/Constraints
 
@@ -133,4 +133,3 @@ The MySQL Operator could be modified to deploy a central repo for backups and le
 * Implications of OperatorVersion installation making MORE cluster level changes than just a CRD.
 * Security around leveraging the common component.  If deploying minio for backups, how do we ensure Instances don't restore someone else's data, or overwrite someone else's backup?
 * Shared Components: What happens when two different Operators require the same common object?
-
