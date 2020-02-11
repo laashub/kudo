@@ -311,6 +311,7 @@ diagnostics:
             kind: StatefulSet # Runs on ALL pods in the statefulset
             name: "{{ .InstanceName }}-zookeeper"
       - name: DNS information for running pod
+        key: "dns-information"
         kind: Command
         spec:
           command: # Can be string or array
@@ -345,7 +346,7 @@ contained within the KUDO Instance's secrets. This is configurable with the
 `diagnostics.filterSecrets` key.
 
 There may be other fields that need to be filtered. To solve for this, KUDO
-introduces the `diagnostics.bundles.filters` key in `operator.yaml`, which
+introduces the `diagnostics.bundle.filters` key in `operator.yaml`, which
 contains a list of filters that files pass through before writing to disk.
 Custom filters use either a regular expression or an object reference and
 JSONPath to derive values to filter.
@@ -374,7 +375,7 @@ An individual bundle resource is represented as a list inside of the
 - **spec**: The attributes of a particular kind. This is different for every
   kind.
 
-Also, may specs may include an `objectRef`. It ALWAYS has the following keys:
+Also, specs may include an `objectRef`. It ALWAYS has the following keys:
 
 - **kind**: The Kubernetes Kind referenced. For example, this may be a
   Deployment, Pod, StatefulSet, or other resource.
