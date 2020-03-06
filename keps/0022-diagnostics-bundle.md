@@ -7,6 +7,7 @@ authors:
 owners:
   - "@mpereira"
   - "@gerred"
+  - "@zen-dog"
 creation-date: 2020-01-24
 last-updated: 2020-01-24
 status: provisional
@@ -168,13 +169,11 @@ people who support operators.
 
 1.  Provide an **easy** experience for operator users to collect diagnostic
     artifact archives
-2.  Provide a **simple** experience for operator developers to extend and
-    publish diagnostics artifacts collectors
-3.  Be resilient to faults and failures. Collect as much diagnostics artifacts
+2.  Be resilient to faults and failures. Collect as much diagnostics artifacts
     as possible and allow failed collections to be retried (idempotency) and
     incremented to (like `wget`'s `--continue` flag), in a way that collection
     is _resumable_
-4.  Incorporate standard tools that are already provided by either organizations
+3.  Incorporate standard tools that are already provided by either organizations
     or the community behind applications as much as possible
 
 ## Non-goals
@@ -183,6 +182,9 @@ people who support operators.
 - At least not initially: collection of metrics from monitoring services (e.g.,
   Prometheus, Statsd, etc.).
 - Automatic fixing of faults
+- Preflight checks
+- Analysis of collected artifacts
+- Extending diagnostics bundle with custom artifact collectors
 
 ## Requirements
 
@@ -208,49 +210,12 @@ people who support operators.
 
 ### Operator user experience
 
-Three phases:
+The output from diagnostics collection is an archive containing all
+diagnostics artifacts for the provided operator instance.
 
-1.  Preflight check (before running operator instance)
-
-    Checks:
-
-    - Does the Kubernetes cluster have enough resources to install the operator
-      with the given set of parameters?
-    - Are there any KUDO-based checks that aren't passing?
-    - Would it be possible to install the operator in that namespace given
-      Kubernetes security policies and etc.?
-
-    ```bash
-    kubectl kudo diagnostics preflight %operator% --namespace=%namespace% \
-            -p %parameter%=%value% \
-            -p %parameter%=%value% \
-            -p %parameter%=%value%
-    ```
-
-2.  Diagnostics collection (on a running operator instance)
-
-    Collects diagnostics artifacts for:
-
-    - Application
-    - Operator instance
-    - KUDO
-    - Kubernetes-workload
-
-    The output from diagnostics collection is an archive containing all
-    diagnostics artifacts.
-
-    ```bash
-    kubectl kudo diagnostics collect --instance=%instance% --namespace=%namespace%
-    ```
-
-3.  Diagnostics analysis
-
-    Is given an archive as input and provides a human-readable report as output
-    containing explanations for any identified issues.
-
-    ```bash
-    kubectl kudo diagnostics analyze cassandra_diagnostics.zip
-    ```
+```bash
+kubectl kudo diagnostics collect --instance=%instance% --namespace=%namespace%
+```
 
 ### Operator developer experience
 
@@ -274,6 +239,7 @@ from the operator developer:
 - RBAC resources that are applicable to the KUDO controller manager
 - Current settings and version information for KUDO
 - Status of last preflight check run.
+- k8s events (can we filter them for resources that the instance owns?)
 
 Operator developer experience, then, focuses on customizing diagnostics
 information to gather information about the running application. The following
