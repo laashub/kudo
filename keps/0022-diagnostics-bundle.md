@@ -238,7 +238,6 @@ from the operator developer:
 - Describe for the KUDO controller manager resources
 - RBAC resources that are applicable to the KUDO controller manager
 - Current settings and version information for KUDO
-- Status of last preflight check run.
 - k8s events (can we filter them for resources that the instance owns?)
 
 Operator developer experience, then, focuses on customizing diagnostics
@@ -268,24 +267,32 @@ key in `operator.yaml`:
 diagnostics:
   bundle:
     resources:
-      - name: Zookeeper Configuration File
-        key: "zookeeper-configuration"
+      - description: Zookeeper Configuration File
+        name: "zookeeper-configuration"
         kind: Copy
         spec:
-          path: /opt/zookeeper/server.properties
+          path: 
+            - /opt/zookeeper/server.properties
+            - /opt/zookeeper/zoo.cfg
+          selector:
+            matchLabels:
+              app: zookeeper
+              heritage: kudo
           objectRef:
             kind: StatefulSet # Runs on ALL pods in the statefulset
-            name: "{{ .InstanceName }}-zookeeper"
-      - name: DNS information for running pod
-        key: "dns-information"
+      - description: DNS information for running pod
+        name: "dns-information"
         kind: Command
         spec:
           command: # Can be string or array
             - nslookup
             - google.com
+          selector:
+            matchLabels:
+              app: zookeeper
+              heritage: kudo
           objectRef:
             kind: Pod
-            name: "{{ .InstanceName }}-zookeeper-0"
     filters:
       - name: Authentication information
         spec:
@@ -297,11 +304,6 @@ of the `diagnostics.bundle` key's presence. Note, moving to a graph-based engine
 for KUDO will make selecting of resources much easier, rather than having to
 use magical strings with templates. Future iterations of this will reduce the
 complexity of selecting resources to run commands and files on.
-
-Steps in a bundle run serially. To prevent the KUDO controller manager from
-crashing, the collector process runs in another pod as a job. **TODO**:
-Bundle collection, CRD, do we take a Velero-style approach? Where are files
-stored? Might be time to introduce a KUDO-specific Minio instance.
 
 Filtering is an important part of diagnostics collection. It enables diagnostics
 to be portably sent to third parties that should not have sensitive information
@@ -324,8 +326,6 @@ All filtered values appear as `**FILTERED**` in relevant logs and files.
 - Do we need to introduce a notion of the collector or controller manager
   signing and/or encrypting bundles? TBD.
 
-#### Preflight Checks
-
 ## Resources
 
 ### bundle.resources
@@ -333,8 +333,8 @@ All filtered values appear as `**FILTERED**` in relevant logs and files.
 An individual bundle resource is represented as an element in the list inside of the
 `diagnostics.bundle.resources` key. Resources ALWAYS have the following keys:
 
-- **name**: The human-readable name of the file.
-- **key**: The machine-readable name of the file. This is used for both
+- **description**: The human-readable name of the file.
+- **name**: The machine-readable name of the file. This is used for both
   references (if needed in the future) and filenames. Extension is OPTIONAL,
   but may be useful for inferring mime types.
 - **kind**: The kind of bundle item.
@@ -345,8 +345,6 @@ Also, specs may include an `objectRef`. It ALWAYS has the following keys:
 
 - **kind**: The Kubernetes Kind referenced. For example, this may be a
   Deployment, Pod, StatefulSet, or other resource.
-- **name**: The name of the object. This is a templated field, and has the same
-  template environment as operator templates.
 
 ### bundle.resources.Copy
 
@@ -367,10 +365,11 @@ Also, specs may include an `objectRef`. It ALWAYS has the following keys:
 ### bundle.resources.HTTP
 
 - **serviceRef**: Object containing references to a Kubernetes service. This is
-  scoped to KUDO-only services.
+  scoped to services made by KUDO.
 - **serviceRef.name**: Name of the service.
 - **serviceRef.port**: Name of the service port. MUST be a named port, not an
   integer value.
+- **path**: URL path to fetch the resource
 
 ### bundle.filters
 
