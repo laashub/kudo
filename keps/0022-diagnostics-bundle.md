@@ -184,7 +184,7 @@ people who support operators.
 - Automatic fixing of faults
 - Preflight checks
 - Analysis of collected artifacts
-- Extending diagnostics bundle with custom artifact collectors
+- Extending diagnostics bundle with custom artifact collectors by the *operator user*
 
 ## Requirements
 
