@@ -253,7 +253,6 @@ forms are available, subject to change over time:
 - **Command**: Run a command on a running pod and copy the stdout/err. Higher level
   resources can also be used, which will run the command on all pods selected by
   that resource.
-- **Task**: Run a KUDO task and copy the stdout and other arbitrary files.
 - **HTTP**: Make an HTTP request to a named service and port and copy the result of the request.
 
 While some of these are redundant (HTTP can be a command or job), the intent
@@ -326,19 +325,21 @@ All redacted values appear as `**REDACTED**` in relevant logs and files.
 ### bundle.resources
 
 An individual bundle resource is represented as an element in the list inside of the
-`diagnostics.bundle.resources` key. Resources ALWAYS have the following keys:
+`diagnostics.bundle.resources` key. Resources have the following REQUIRED keys:
 
-- **description**: The human-readable name of the file.
 - **name**: The machine-readable name of the file. This is used for both
   references (if needed in the future) and filenames. Extension is OPTIONAL,
   but may be useful for inferring MIME types.
 - **kind**: The kind of bundle item.
 - **spec**: The attributes of a particular kind. This is different for every
-  kind.
+  kind.  
+  
+and an OPTIONAL key
+- **description**: The human-readable name of the file.
 
 Also, specs may include a `selector` that conforms to Kubernetes [selector](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)
 and allows to select a set of resources. The individual filters defined in this key are `AND`-ed to form the resulting filter.
-The key has at least one of the following sub-keys:
+The key has AT LEAST ONE of the following sub-keys:
 
 - **matchLabels**: key-value pairs of labels that should be defined on a resource to be processed.
 - **matchExpressions**: set-based requirements (if supported by the resource)
