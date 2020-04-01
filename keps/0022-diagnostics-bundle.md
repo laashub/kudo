@@ -4,12 +4,14 @@ title: Diagnostics Bundle
 short-desc: Automatic collection of diagnostics data for KUDO operators
 authors:
   - "@mpereira"
+  - "@vemelin-epm"
 owners:
   - "@mpereira"
   - "@gerred"
   - "@zen-dog"
+  - "@vemelin-epm"
 creation-date: 2020-01-24
-last-updated: 2020-01-24
+last-updated: 2020-03-26
 status: provisional
 ---
 
@@ -182,7 +184,7 @@ people who support operators.
 - At least not initially: collection of metrics from monitoring services (e.g.,
   Prometheus, Statsd, etc.).
 - Automatic fixing of faults
-- Preflight checks
+- Preflight checks e.g. checking if the cluster is in a state that allows an operator installation
 - Analysis of collected artifacts
 - Extending diagnostics bundle with custom artifact collectors by the *operator user*
 
@@ -268,7 +270,7 @@ diagnostics:
   bundle:
     resources:
       - description: Zookeeper Configuration File
-        name: "zookeeper-configuration"
+        name: zookeeper-configuration
         kind: Copy
         spec:
           path: 
@@ -279,9 +281,9 @@ diagnostics:
               app: zookeeper
               heritage: kudo
           objectRef:
-            kind: StatefulSet # Runs on ALL pods in the statefulset
+            kind: StatefulSet
       - description: DNS information for running pod
-        name: "dns-information"
+        name: dns-information
         kind: Command
         spec:
           command: # Can be string or array
@@ -294,15 +296,13 @@ diagnostics:
           objectRef:
             kind: Pod
     filters:
-      - name: Authentication information
+      - description: Authentication information
         spec:
           regex: "^host: %w+$"
 ```
 
 This key is **OPTIONAL**. Default diagnostics collection will happen regardless
-of the `diagnostics.bundle` key's presence. Note, moving to a graph-based engine
-for KUDO will make selecting of resources much easier, rather than having to
-use magical strings with templates. Future iterations of this will reduce the
+of the `diagnostics.bundle` key's presence. Future iterations of this might reduce the
 complexity of selecting resources to run commands and files on.
 
 Filtering is an important part of diagnostics collection. It enables diagnostics
@@ -336,7 +336,7 @@ An individual bundle resource is represented as an element in the list inside of
 - **description**: The human-readable name of the file.
 - **name**: The machine-readable name of the file. This is used for both
   references (if needed in the future) and filenames. Extension is OPTIONAL,
-  but may be useful for inferring mime types.
+  but may be useful for inferring MIME types.
 - **kind**: The kind of bundle item.
 - **spec**: The attributes of a particular kind. This is different for every
   kind.
