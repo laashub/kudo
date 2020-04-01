@@ -254,8 +254,7 @@ forms are available, subject to change over time:
   resources can also be used, which will run the command on all pods selected by
   that resource.
 - **Task**: Run a KUDO task and copy the stdout and other arbitrary files.
-- **HTTP**: Make an HTTP request from the KUDO controller manager to a named
-  service and port and copy the result of the request.
+- **HTTP**: Make an HTTP request to a named service and port and copy the result of the request.
 
 While some of these are redundant (HTTP can be a command or job), the intent
 is to provide a high level experience where possible so that operator developers
@@ -280,8 +279,6 @@ diagnostics:
             matchLabels:
               app: zookeeper
               heritage: kudo
-          objectRef:
-            kind: StatefulSet
       - description: DNS information for running pod
         name: dns-information
         kind: Command
@@ -293,9 +290,7 @@ diagnostics:
             matchLabels:
               app: zookeeper
               heritage: kudo
-          objectRef:
-            kind: Pod
-    filters:
+    redact:
       - description: Authentication information
         spec:
           regex: "^host: %w+$"
@@ -305,21 +300,21 @@ This key is **OPTIONAL**. Default diagnostics collection will happen regardless
 of the `diagnostics.bundle` key's presence. Future iterations of this might reduce the
 complexity of selecting resources to run commands and files on.
 
-Filtering is an important part of diagnostics collection. It enables diagnostics
+_Redaction_ is an important part of diagnostics collection. It enables diagnostics
 to be portably sent to third parties that should not have sensitive information
 that logs and files can contain.
 
-By default, KUDO filters all resources (and custom resources) of values
+By default, KUDO redacts all resources (and custom resources) to obscure values
 contained within the KUDO Instance's secrets. This is configurable with the
-`diagnostics.filterSecrets` key.
+`diagnostics.redactSecrets` key.
 
-There may be other fields that need to be filtered. To solve for this, KUDO
-introduces the `diagnostics.bundle.filters` key in `operator.yaml`, which
+There may be other fields that need to be redacted. To solve for this, KUDO
+introduces the `diagnostics.bundle.redact` key in `operator.yaml`, which
 contains a list of filters that files pass through before writing to disk.
 Custom filters use either a regular expression or an object reference and
-JSONPath to derive values to filter.
+JSONPath to derive the values to be redacted.
 
-All filtered values appear as `**FILTERED**` in relevant logs and files.
+All redacted values appear as `**REDACTED**` in relevant logs and files.
 
 ### More Notes
 
@@ -341,26 +336,22 @@ An individual bundle resource is represented as an element in the list inside of
 - **spec**: The attributes of a particular kind. This is different for every
   kind.
 
-Also, specs may include an `objectRef`. It ALWAYS has the following keys:
+Also, specs may include a `selector` that conforms to Kubernetes [selector](https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/)
+and allows to select a set of resources. The individual filters defined in this key are `AND`-ed to form the resulting filter.
+The key has at least one of the following sub-keys:
 
-- **kind**: The Kubernetes Kind referenced. For example, this may be a
-  Deployment, Pod, StatefulSet, or other resource.
+- **matchLabels**: key-value pairs of labels that should be defined on a resource to be processed.
+- **matchExpressions**: set-based requirements (if supported by the resource)
 
 ### bundle.resources.Copy
 
 - **path**: Absolute path inside of the referenced pods.
-- **objectRef**
+- **selector**
 
 ### bundle.resources.Command
 
 - **command**: Command to run. May be a string or an array.
-- **objectRef**
-
-### bundle.resources.Task
-
-- **taskRef**: Name of the task to run. **NOTE**: We MAY need a Pause and Resume
-  task to be able to copy files and run commands during the running of a task.
-  Otherwise, we may want to make this an arbitrary job.
+- **selector**
 
 ### bundle.resources.HTTP
 
@@ -369,11 +360,11 @@ Also, specs may include an `objectRef`. It ALWAYS has the following keys:
 - **serviceRef.name**: Name of the service.
 - **serviceRef.port**: Name of the service port. MUST be a named port, not an
   integer value.
-- **path**: URL path to fetch the resource
+- **path**: URL path
 
-### bundle.filters
+### bundle.redact
 
-Filters are a list of filters. They contain the following keys:
+`bundle.redact` key comprises a list of filters to find and redact sensitive data. Each redaction filter contains the following keys:
 
 - **name**: The human readable name of the filter.
 - **regex** (optional): Regular expression, not encased in slashes, to use.
@@ -381,7 +372,7 @@ Filters are a list of filters. They contain the following keys:
 - **objectRef** (optional): Required if `jsonPath` is present.
 - **jsonPath** (optional): JSONPath referencing a non-object key in the
   referenced object. All instances of the value of this key will be removed and
-  replaced with `**FILTERED**`. Required if `objectRef` is present.
+  replaced with `**REDACTED**`. Required if `objectRef` is present.
 
 ## Implementation history
 
